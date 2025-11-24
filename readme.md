@@ -1,13 +1,47 @@
-# 🤖 Sentiment AI Assistant (Django + Groq + VADER)
+# 🤖 Sentinel AI: Voice-Enabled Sentiment Assistant
+### Enterprise-Grade Conversational Intelligence Platform
 
-A voice-enabled, context-aware chatbot that performs real-time sentiment analysis on conversation flows. Built for the LiaPlus Assignment.
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Django](https://img.shields.io/badge/Django-5.0-green)
+![LLM](https://img.shields.io/badge/Model-Llama%203.1-purple)
+![Status](https://img.shields.io/badge/Status-Prototype-orange)
 
-## 🚀 Key Features (Innovations)
-- **Hybrid Intelligence:** Combines VADER (Rule-based) for speed with Llama 3 (LLM) for conversational capability.
-- **Voice Interface:** Full Speech-to-Text and Text-to-Speech support using Web Speech API.
-- **Structured Output:** AI strictly adheres to JSON format to provide "Smart Suggestions" (clickable chips).
-- **Dynamic UI:** Interface colors morph (Green/Red/Blue) based on the user's emotional state.
-- **Reporting:** One-click generation of PDF transcripts with sentiment graphs.
+## 📋 Overview
+Sentinel AI is a robust, full-stack chatbot designed to perform real-time sentiment analysis and context-aware conversational responses. It bridges the gap between rule-based NLP (VADER) and Generative AI (Llama 3 via Groq LPU).
+
+The system currently runs as a monolithic prototype featuring **Voice-to-Voice interaction**, **Persistent Memory**, and **Enterprise Reporting**.
+
+---
+
+## 📸 Project Demo
+
+| **Voice-Enabled Interface** | **Smart Sentiment Analysis** |
+|:---:|:---:|
+| ![Chat Interface](screenshots/image1.png) <br> *Real-time sentiment scoring and Chameleon UI* | ![Voice Mode](screenshots/image2.png) <br> *Voice interaction with active listening state* |
+
+| **Analytics Dashboard** | **Official Report** |
+|:---:|:---:|
+| ![Report Graph](screenshots/image3.png) <br> *Session trend analysis graph* | [**📄 View Sample Report PDF**](screenshots/Report.pdf) <br> *Click to view generated transcript* |
+
+---
+
+## ✨ Implemented Features (Current Status)
+
+### 1. Hybrid Intelligence Engine
+* **Layer 1 (Speed):** Uses **NLTK VADER** for immediate emotional scoring (<10ms).
+* **Layer 2 (Cognition):** Uses **Llama 3.1 (8B)** for empathetic, context-aware reasoning.
+
+### 2. Advanced User Experience
+* **🎙️ Voice Interaction:** Full integration of the **Web Speech API** for Speech-to-Text (STT) and Text-to-Speech (TTS).
+* **🎭 Chameleon UI:** The interface dynamically changes color themes (Green/Red/Blue) based on real-time sentiment scores.
+* **⚡ Smart Suggestions:** The AI enforces structured JSON output to predict and render clickable "Quick Reply" chips.
+
+### 3. Enterprise Features
+* **📊 PDF Reporting:** One-click generation of official transcripts, including timestamped logs and sentiment trend graphs (using `jsPDF` and `Chart.js`).
+* **💾 Persistent Memory:** Full Database Schema stores `Conversation` sessions and `Message` logs, persisting data across server restarts.
+* **⚙️ Admin Dashboard:** Fully accessible Django Admin panel for auditing chat logs.
+
+---
 
 ## 🛠️ Chosen Technologies
 - [cite_start]**Backend:** Django 5.0 (Session management, API routing) [cite: 25]
@@ -27,24 +61,29 @@ A voice-enabled, context-aware chatbot that performs real-time sentiment analysi
 ---
 
 ## 🔮 Future Architecture & Scalability Roadmap
-*While the current prototype runs on a development server, the following architecture is designed for scaling to 10,000+ concurrent users.*
+*While the current prototype runs on a development server, the following architecture is designed for scaling to 10,000+ concurrent users with Enterprise Knowledge integration.*
 
 
 
-### Phase 1: App Server (Concurrency)
-* **Current:** `python manage.py runserver` (Single-threaded, blocking).
+### Phase 1: Knowledge Integration (RAG Pipeline)
+* **Current:** The LLM relies on pre-trained knowledge.
+* **Future Implementation:** Implement **Retrieval-Augmented Generation (RAG)**.
+    * *Vector DB:* Integrate **Pinecone** or **FAISS** to store company documents (PDFs, Wikis).
+    * *Embedding Model:* Use `all-MiniLM-L6-v2` to vectorize user queries.
+    * *Outcome:* The bot will be able to answer specific domain questions (e.g., "What is our refund policy?") by retrieving relevant context before generating an answer.
+
+### Phase 2: App Server (Concurrency)
+* **Current:** `python manage.py runserver` (Single-threaded).
 * **Future Implementation:** Migrate to **Gunicorn** (WSGI) behind an **Nginx** reverse proxy to handle concurrent request forking.
 
-### Phase 2: Data Layer (Throughput)
+### Phase 3: Data Layer (Throughput)
 * **Current:** SQLite (File-based locking).
 * **Future Implementation:** Migrate to **PostgreSQL**. This enables **Row-Level Locking**, allowing thousands of users to write messages simultaneously without "Database Locked" errors.
 
-### Phase 3: Asynchronous Task Queue
-* **Current:** Synchronous API calls (User waits for Llama 3 generation).
+### Phase 4: Asynchronous Task Queue
+* **Current:** Synchronous API calls.
 * **Future Implementation:** Implement **Celery + Redis**.
     * *Flow:* User sends message -> Server accepts (202 Accepted) -> **Celery Worker** processes LLM request in background -> Server pushes result via WebSockets.
-
-
 
 ---
 
