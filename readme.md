@@ -44,26 +44,25 @@ The system currently runs as a monolithic prototype featuring **Voice-to-Voice i
 ---
 
 ## 🛠️ Chosen Technologies
-- [cite_start]**Backend:** Django 5.0 (Session management, API routing) [cite: 25]
+- **Backend:** Django 5.0 (Session management, API routing)
 - **AI Engine:** LangChain + Groq (Llama-3.1-8b-instant)
-- [cite_start]**Sentiment Logic:** NLTK VADER (Valence Aware Dictionary and sEntiment Reasoner) [cite: 26]
+- **Sentiment Logic:** NLTK VADER (Valence Aware Dictionary and sEntiment Reasoner)
 - **Frontend:** HTML5, CSS3, JavaScript (Fetch API, Chart.js, jsPDF)
 
 ## 🧠 Explanation of Sentiment Logic
-[cite_start]The application uses a dual-layer approach[cite: 26]:
+The application uses a dual-layer approach:
 1. **Statement-Level (Tier 2):** Every incoming message is scored by VADER. The `compound` score determines if the text is Positive (>0.05), Negative (<-0.05), or Neutral. This score is injected into the System Prompt, instructing Llama 3 to adapt its tone (e.g., "De-escalate" if negative).
 2. **Conversation-Level (Tier 1):** We track the running average of all compound scores. At the end of the session, this average determines the "Overall Conversation Sentiment" and generates the mood trend graph.
 
 ## ✅ Status of Tier 2 Implementation
-[cite_start]**Completed and Exceeded.** - Each message displays its individual sentiment score in real-time[cite: 27].
-- [cite_start]The UI provides an optional "Mood Trend" graph upon ending the chat[cite: 14].
+**Completed and Exceeded.**
+- Each message displays its individual sentiment score in real-time.
+- The UI provides an optional "Mood Trend" graph upon ending the chat.
 
 ---
 
 ## 🔮 Future Architecture & Scalability Roadmap
 *While the current prototype runs on a development server, the following architecture is designed for scaling to 10,000+ concurrent users with Enterprise Knowledge integration.*
-
-
 
 ### Phase 1: Knowledge Integration (RAG Pipeline)
 * **Current:** The LLM relies on pre-trained knowledge.
@@ -89,7 +88,7 @@ The system currently runs as a monolithic prototype featuring **Voice-to-Voice i
 
 ## 🏃‍♂️ How to Run
 
-### [cite_start]Option 1: Standard [cite: 24]
+### Option 1: Standard
 1. Clone the repo.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Create a `.env` file with `GROQ_API_KEY=your_key`.
