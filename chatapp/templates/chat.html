@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Enterprise AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root { --primary: #4f46e5; --bg: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; transition: background 0.5s ease; }
+        
+        .container { width: 100%; max-width: 600px; background: white; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 90vh; overflow: hidden; position: relative; }
+        
+        /* Header */
+        .header { background: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; z-index: 2; }
+        .header h2 { margin: 0; font-size: 1.1rem; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 10px; height: 10px; background: #ddd; border-radius: 50%; transition: 0.3s; }
+        
+        /* Chat Area */
+        .history { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: #fafafa; scroll-behavior: smooth; }
+        
+        /* Bubbles */
+        .message-row { display: flex; flex-direction: column; opacity: 0; animation: slideUp 0.3s forwards; }
+        .message-row.user { align-items: flex-end; }
+        .message-row.bot { align-items: flex-start; }
+        
+        .bubble { max-width: 80%; padding: 14px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .user .bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+        .bot .bubble { background: white; color: #374151; border: 1px solid #e5e7eb; border-bottom-left-radius: 4px; }
+        
+        /* Suggestions */
+        .suggestions { padding: 10px 20px; display: flex; gap: 10px; overflow-x: auto; background: white; min-height: 50px; align-items: center; }
+        .chip { background: white; border: 1px solid var(--primary); color: var(--primary); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .chip:hover { background: var(--primary); color: white; }
+
+        /* Input Area */
+        .input-area { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
+        input { flex: 1; padding: 12px 15px; border: 2px solid #eee; border-radius: 12px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
+        
+        .icon-btn { width: 45px; height: 45px; border-radius: 12px; border: none; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; }
+        .send-btn { background: var(--primary); color: white; }
+        .mic-btn { background: #f3f4f6; color: #555; }
+        .mic-btn.listening { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
+        
+        /* Modal */
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-card { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 450px; text-align: center; }
+
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2><div class="status-dot" id="status-dot"></div> <span id="status-text">Ready</span></h2>
+        <button onclick="endChat()" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">End Session</button>
+    </div>
+
+    <div class="history" id="history">
+        <div style="text-align:center; color:#9ca3af; font-size:0.9rem; margin-top:50px;">
+            <i class="fas fa-microphone"></i> Voice Enabled<br>Start speaking or typing.
+        </div>
+    </div>
+    
+    <div class="suggestions" id="suggestions"></div>
+
+    <div class="input-area">
+        <button class="icon-btn mic-btn" id="mic-btn" onclick="toggleVoice()"><i class="fas fa-microphone"></i></button>
+        <input type="text" id="inp" placeholder="Type or speak..." onkeypress="if(event.key==='Enter') send()">
+        <button class="icon-btn send-btn" onclick="send()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-card">
+        <h2 style="margin-bottom:5px;">Session Report</h2>
+        <p id="final-mood" style="font-size:1.5rem; font-weight:bold; margin:10px 0;">Neutral</p>
+        <div style="height:200px;"><canvas id="chart"></canvas></div>
+        <button class="icon-btn send-btn" style="width:100%; margin-top:20px;" onclick="generatePDF()">Download PDF</button>
+        <button class="icon-btn mic-btn" style="width:100%; margin-top:10px;" onclick="location.reload()">New Chat</button>
+    </div>
+</div>
+
+<script>
+    const { jsPDF } = window.jspdf;
+    let fullHistory = [];
+    const synthesis = window.speechSynthesis;
+    let recognition;
+
+    // --- Voice Setup ---
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.onstart = () => document.getElementById('mic-btn').classList.add('listening');
+        recognition.onend = () => document.getElementById('mic-btn').classList.remove('listening');
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            document.getElementById('inp').value = text;
+            send(); // Auto-send on voice input
+        };
+    } else {
+        document.getElementById('mic-btn').style.display = 'none';
+    }
+    
+    function toggleVoice() { recognition.start(); }
+
+    // --- Core Logic ---
+    const COLORS = { 'Positive': '#10b981', 'Negative': '#ef4444', 'Neutral': '#6366f1' };
+
+    async function send(msgText = null) {
+        const inp = document.getElementById('inp');
+        const text = msgText || inp.value.trim();
+        if(!text) return;
+
+        // UI Updates
+        addBubble(text, 'user');
+        inp.value = '';
+        document.getElementById('suggestions').innerHTML = '';
+        
+        // API Call
+        const res = await fetch('/api/chat/', {
+            method: 'POST',
+            body: JSON.stringify({ message: text }),
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+
+        // Process Response
+        updateHeader(data.sentiment, data.score);
+        addBubble(data.bot_response, 'bot');
+        renderSuggestions(data.suggestions);
+
+        // SPEAK THE RESPONSE (TTS)
+        const utterance = new SpeechSynthesisUtterance(data.bot_response);
+        utterance.rate = 1.1; 
+        synthesis.speak(utterance);
+    }
+
+    function addBubble(text, sender) {
+        const hist = document.getElementById('history');
+        if(hist.innerText.includes('Voice Enabled')) hist.innerHTML = '';
+        
+        const div = document.createElement('div');
+        div.className = `message-row ${sender}`;
+        const content = sender === 'bot' ? marked.parse(text) : text;
+        div.innerHTML = `<div class="bubble">${content}</div>`;
+        hist.appendChild(div);
+        hist.scrollTop = hist.scrollHeight;
+    }
+
+    function renderSuggestions(list) {
+        const container = document.getElementById('suggestions');
+        container.innerHTML = '';
+        if(!list) return;
+        list.forEach(sugg => {
+            const btn = document.createElement('button');
+            btn.className = 'chip';
+            btn.innerText = sugg;
+            btn.onclick = () => send(sugg);
+            container.appendChild(btn);
+        });
+    }
+
+    function updateHeader(sentiment, score) {
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-text');
+        dot.style.background = COLORS[sentiment];
+        txt.innerHTML = `${sentiment} <span style="color:#9ca3af; font-size:0.8rem">(${score})</span>`;
+        document.documentElement.style.setProperty('--primary', COLORS[sentiment]);
+    }
+
+    async function endChat() {
+        const res = await fetch('/api/end/', { method: 'POST' });
+        const data = await res.json();
+        fullHistory = data.history_log;
+        
+        const moodEl = document.getElementById('final-mood');
+        moodEl.innerText = data.overall;
+        moodEl.style.color = COLORS[data.overall];
+
+        const ctx = document.getElementById('chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.graph_labels,
+                datasets: [{
+                    label: 'Sentiment',
+                    data: data.graph_data,
+                    borderColor: COLORS[data.overall],
+                    tension: 0.4, fill: false
+                }]
+            },
+            options: { scales: { y: { min:-1, max:1, display:false }, x: { display:false } }, plugins:{ legend:{ display:false } } }
+        });
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function generatePDF() {
+        const doc = new jsPDF();
+        doc.setFont("helvetica", "bold");
+        doc.text("Sentiment Analysis Report", 20, 20);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        let y = 40;
+        
+        fullHistory.forEach((item) => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            doc.setFont("helvetica", "bold");
+            doc.text(`User [${item.sentiment}]:`, 20, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(doc.splitTextToSize(item.user, 170), 20, y+5);
+            y += 20;
+            doc.setFont("helvetica", "bold");
+            doc.text(`AI:`, 20, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(doc.splitTextToSize(item.bot_text, 170), 20, y+5);
+            y += 20;
+        });
+        doc.save("Report.pdf");
+    }
+</script>
+
+</body>
+</html>
